@@ -1,0 +1,7 @@
+[
+    {"name": "City Hospital", "beds": 12, "capacity": 20, "emergency": false},
+    {"name": "LifeCare Hospital", "beds": 5, "capacity": 20, "emergency": false},
+    {"name": "Green Valley Clinic", "beds": 8, "capacity": 20, "emergency": false},
+    {"name": "Sunrise Medical Centre", "beds": 2, "capacity": 15, "emergency": true},
+    {"name": "Apollo General Hospital", "beds": 15, "capacity": 25, "emergency": false}
+]
