@@ -1,18 +1,16 @@
-from flask import Flask, render_template, request, redirect, jsonify
-import json
+from flask import Flask, render_template, request, redirect
 import os
 
 app = Flask(__name__)
 
-DATA_FILE = "data/hospitals.json"
-
-def load_data():
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
-
-def save_data(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+# In-memory data store — works perfectly on Render (no file writes needed)
+hospitals = [
+    {"name": "City Hospital",          "beds": 12, "capacity": 20, "emergency": False},
+    {"name": "LifeCare Hospital",       "beds": 5,  "capacity": 20, "emergency": False},
+    {"name": "Green Valley Clinic",     "beds": 8,  "capacity": 20, "emergency": False},
+    {"name": "Sunrise Medical Centre",  "beds": 2,  "capacity": 15, "emergency": True},
+    {"name": "Apollo General Hospital", "beds": 15, "capacity": 25, "emergency": False},
+]
 
 def predict_beds(current):
     if current < 5:
@@ -24,12 +22,11 @@ def predict_beds(current):
 
 @app.route("/")
 def index():
-    hospitals = load_data()
     for h in hospitals:
         h["prediction"] = predict_beds(h["beds"])
         h["pct"] = min(100, round((h["beds"] / h.get("capacity", 20)) * 100))
-    total_beds = sum(h["beds"] for h in hospitals)
-    high_risk = sum(1 for h in hospitals if h["beds"] < 5)
+    total_beds  = sum(h["beds"] for h in hospitals)
+    high_risk   = sum(1 for h in hospitals if h["beds"] < 5)
     emergencies = sum(1 for h in hospitals if h.get("emergency", False))
     return render_template("index.html",
         hospitals=hospitals,
@@ -42,21 +39,17 @@ def index():
 def update():
     name = request.form["name"]
     beds = int(request.form["beds"])
-    hospitals = load_data()
-    for hospital in hospitals:
-        if hospital["name"] == name:
-            hospital["beds"] = beds
-    save_data(hospitals)
+    for h in hospitals:
+        if h["name"] == name:
+            h["beds"] = max(0, min(beds, h["capacity"]))
     return redirect("/")
 
 @app.route("/toggle_emergency", methods=["POST"])
 def toggle_emergency():
     name = request.form["name"]
-    hospitals = load_data()
-    for hospital in hospitals:
-        if hospital["name"] == name:
-            hospital["emergency"] = not hospital.get("emergency", False)
-    save_data(hospitals)
+    for h in hospitals:
+        if h["name"] == name:
+            h["emergency"] = not h.get("emergency", False)
     return redirect("/")
 
 if __name__ == "__main__":
